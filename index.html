@@ -109,6 +109,11 @@ textarea{resize:vertical;min-height:70px}
 .chip-add-form{display:inline-flex;gap:6px;align-items:center}
 .chip-input{width:120px;padding:6px 10px;font-size:13px;border-radius:999px}
 .chip-ok{border:1.5px solid var(--accent);background:var(--accent);color:#fff;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+/* 运动分项时长 */
+.ex-dur{display:flex;align-items:center;gap:10px;margin-top:8px}
+.ex-name{flex:0 0 auto;font-size:13.5px;font-weight:600;color:#5b616b;min-width:60px}
+.ex-dur input{flex:1}
+.ex-unit{font-size:12.5px;color:var(--muted)}
 
 /* ---------- 保存栏 ---------- */
 .savebar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid #eceef2;padding:10px 16px calc(10px + env(safe-area-inset-bottom));z-index:40}
@@ -172,9 +177,38 @@ footer .hotline b{color:#5f6771}
 #toast.show{transform:translateX(-50%) translateY(0)}
 section.tabpane{display:none}
 section.tabpane.active{display:block}
+
+/* ---------- 进入封面 ---------- */
+#cover{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#e9f2ee 0%,#f7efe6 48%,#eef0f7 100%);transition:opacity .9s ease;overflow:hidden}
+#cover.gone{opacity:0;pointer-events:none}
+#cover .orb{position:absolute;border-radius:50%;filter:blur(44px);opacity:.55;animation:breathe 12s ease-in-out infinite}
+#cover .orb1{width:320px;height:320px;background:#c6e3d9;top:-70px;left:-90px}
+#cover .orb2{width:300px;height:300px;background:#e3d3ef;bottom:-80px;right:-70px;animation-delay:-4s}
+#cover .orb3{width:220px;height:220px;background:#f6dfc4;top:28%;right:6%;animation-delay:-8s}
+@keyframes breathe{0%,100%{transform:scale(1) translate(0,0)}50%{transform:scale(1.16) translate(0,-18px)}}
+#cover .inner{position:relative;text-align:center;padding:24px}
+#cover .big{font-size:64px;line-height:1;animation:softIn 1.1s ease both}
+#cover h2{font-size:24px;color:#4c5f5b;margin-top:18px;font-weight:700;letter-spacing:2px;animation:softIn 1.3s ease both}
+#cover .words{font-size:15px;color:#7b8b87;margin-top:12px;line-height:2;max-width:300px;margin-left:auto;margin-right:auto;animation:softIn 1.6s ease both}
+#cover .enter{margin-top:30px;border:none;background:linear-gradient(135deg,#7fb3a5,#9cc4b7);color:#fff;font-size:16px;font-weight:600;padding:14px 36px;border-radius:999px;cursor:pointer;box-shadow:0 8px 24px rgba(127,179,165,.35);font-family:inherit;animation:softIn 1.9s ease both}
+#cover .enter:active{transform:scale(.97)}
+#cover .foot{font-size:12px;color:#a9b4b0;margin-top:26px;letter-spacing:1px}
+@keyframes softIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 </style>
 </head>
 <body>
+
+<!-- ================= 进入封面 ================= -->
+<div id="cover">
+  <div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div>
+  <div class="inner">
+    <div class="big">🌱</div>
+    <h2>今天的你，辛苦了</h2>
+    <div class="words">不管今天过得好不好，<br>你愿意打开这一页，<br>就已经在好好照顾自己。</div>
+    <button class="enter" id="coverEnter">轻轻点一下，开始记录</button>
+    <div class="foot">你的记录，只属于你</div>
+  </div>
+</div>
 
 <!-- ================= 欢迎与云端配置 ================= -->
 <div id="screen-setup" class="screen hidden">
@@ -375,10 +409,9 @@ create policy "own rows" on public.daily_records
   </div>
 
   <div class="card">
-    <h2>🏃 运动<span class="sub">动一点点也算数</span></h2>
+    <h2>🏃 运动<span class="sub">动一点点也算数；每项运动分别记时长</span></h2>
     <div class="chips" id="exChips" data-mode="multi"></div>
-    <div class="field-label">运动时长（分钟，可选）</div>
-    <input type="number" id="exMin" min="0" max="600" step="5" inputmode="numeric" placeholder="例如 30">
+    <div id="exDurations"></div>
   </div>
 
   <div class="card">
@@ -639,8 +672,7 @@ var CUSTOM_GROUPS={
   exChips:{solo:'无运动',defaults:['无运动','快走','慢跑','羽毛球','健身','拉伸/瑜伽','骑行'],addLabel:'其他',placeholder:'例如：打篮球 / 游泳'},
   symChips:{solo:'无不适',defaults:['无不适','头疼','头晕','耳鸣','心慌/心跳快','胸闷','胃口变差','胃口亢进','胃胀/恶心','记忆力变差','注意力难集中','肩颈紧绷','肌肉酸痛','身体沉重疲乏'],addLabel:'其他',placeholder:'例如：手抖 / 胃痛'},
   trigChips:{solo:'无',defaults:['无','工作压力','加班','吵架/冲突','人际摩擦','长时间内耗','身体不适','睡眠太差','经济压力','家庭事务','纪念日/回忆'],addLabel:'其他',placeholder:'例如：考试 / 搬家'},
-  negChips:{solo:'',defaults:['无'],fixed:['无'],addLabel:'其他',placeholder:'例如：有短暂想法、无计划'},
-  medDose:{solo:'',defaults:['半粒','一粒'],addLabel:'其他',placeholder:'例如：2粒 / 半片 / 5mg'}
+  negChips:{solo:'',defaults:['无'],fixed:['无'],addLabel:'其他',placeholder:'例如：有短暂想法、无计划'}
 };
 function readCustom(){try{return JSON.parse(localStorage.getItem(CUSTOM_KEY))||{}}catch(e){return {}}}
 function saveCustom(o){try{localStorage.setItem(CUSTOM_KEY,JSON.stringify(o))}catch(e){}}
@@ -649,35 +681,43 @@ function saveHidden(o){try{localStorage.setItem(HIDDEN_KEY,JSON.stringify(o))}ca
 function findChip(box,v){var out=null;box.querySelectorAll('.chip').forEach(function(c){if(c.getAttribute('data-value')===v)out=c});return out}
 function groupOf(box){return box.id||box.getAttribute('data-group')||''}
 function renderGroup(groupId){
-  var cfg=CUSTOM_GROUPS[groupId];if(!cfg)return;
+  var cfg=CUSTOM_GROUPS[groupId];
+  var isDose=groupId.indexOf('medDose-')===0;
+  var defaults=(cfg&&cfg.defaults)||(isDose?['半粒','一粒']:[]);
+  var solo=(cfg&&cfg.solo)||'';
+  var fixed=(cfg&&cfg.fixed)||[];
+  var addLabel=(cfg&&cfg.addLabel)||'其他';
   var customs=(readCustom()[groupId])||[];
   var hidden=(readHidden()[groupId])||[];
-  var values=cfg.defaults.concat(customs).filter(function(v){return hidden.indexOf(v)<0});
-  var boxes=groupId==='medDose'?$$('.dose-chips'):[document.getElementById(groupId)];
+  var values=defaults.concat(customs).filter(function(v){return hidden.indexOf(v)<0});
+  var boxes=isDose?$$('.dose-chips[data-group="'+groupId+'"]'):[document.getElementById(groupId)];
   boxes.forEach(function(box){
     if(!box)return;
     var prev=[];box.querySelectorAll('.chip.selected').forEach(function(c){prev.push(c.getAttribute('data-value'))});
     box.innerHTML='';
     values.forEach(function(v){
       var btn=document.createElement('button');btn.type='button';btn.className='chip';btn.setAttribute('data-value',v);
-      if(cfg.solo===v)btn.setAttribute('data-solo','1');
-      var isFixed=cfg.fixed&&cfg.fixed.indexOf(v)>=0;
+      if(solo===v)btn.setAttribute('data-solo','1');
+      var isFixed=fixed.indexOf(v)>=0;
       btn.innerHTML=esc(v)+(isFixed?'':'<span class="chip-del">✕</span>');
       box.appendChild(btn);
     });
-    var add=document.createElement('button');add.type='button';add.className='chip add-chip';add.innerHTML='＋ '+cfg.addLabel;
+    var add=document.createElement('button');add.type='button';add.className='chip add-chip';add.innerHTML='＋ '+addLabel;
     box.appendChild(add);
     prev.forEach(function(v){var c=findChip(box,v);if(c)c.classList.add('selected')});
     if(box.id==='negChips')updateNegHint();
+    if(box.id==='exChips')renderExDurations();
   });
 }
 function openChipInput(box){
   var old=box.querySelector('.chip-add-form');if(old)old.remove();
   var cfg=CUSTOM_GROUPS[groupOf(box)];
+  var ph=(cfg&&cfg.placeholder)||'例如：2粒 / 半片 / 5mg';
   var wrap=document.createElement('span');wrap.className='chip-add-form';
-  wrap.innerHTML='<input class="chip-input" placeholder="'+esc(cfg.placeholder||'输入后点确定')+'" maxlength="12"><button class="chip-ok">确定</button>';
+  wrap.innerHTML='<input class="chip-input" placeholder="'+esc(ph)+'" maxlength="12"><button class="chip-ok">确定</button>';
   box.appendChild(wrap);
   var inp=wrap.querySelector('.chip-input');inp.focus();
+  inp.addEventListener('blur',function(){if(!inp.value.trim())wrap.remove()});
   function commit(){
     var v=inp.value.trim();if(!v)return;
     var g=groupOf(box);
@@ -709,8 +749,42 @@ function removeChip(chip){
   }
   renderGroup(g);
 }
+/* 运动分项时长：选中的每项运动各有一行分钟输入 */
+function renderExDurations(){
+  var box=$('#exDurations');if(!box)return;
+  // 重绘前保留已填的时长，避免勾选其他运动时数据丢失
+  var prev={};
+  box.querySelectorAll('.ex-dur').forEach(function(row){
+    var t=row.getAttribute('data-type');
+    var v=row.querySelector('.ex-min').value;
+    if(t!==null&&v!=='')prev[t]=v;
+  });
+  box.innerHTML='';
+  var sel=$$('#exChips .chip.selected').filter(function(c){return c.getAttribute('data-value')!=='无运动'});
+  sel.forEach(function(c){
+    var v=c.getAttribute('data-value');
+    var row=document.createElement('div');row.className='ex-dur';row.setAttribute('data-type',v);
+    row.innerHTML='<span class="ex-name">'+esc(v)+'</span><input class="ex-min" type="number" min="0" max="600" step="5" inputmode="numeric" placeholder="分钟"><span class="ex-unit">分钟</span>';
+    if(prev[v]!==undefined)row.querySelector('.ex-min').value=prev[v];
+    box.appendChild(row);
+  });
+}
+/* 兼容新旧数据：返回 [{type,minutes}]，旧格式(types+单个minutes)自动转换 */
+function exInfo(r){
+  var e=r&&r.exercise;if(!e)return [];
+  var items=(e.items||[]).filter(function(it){return it&&it.type&&it.minutes!=null});
+  if(!items.length&&e.minutes&&e.types&&e.types.join('').indexOf('无运动')<0){
+    var t=e.types.filter(function(x){return x!=='无运动'})[0];
+    if(t)items=[{type:t,minutes:e.minutes}];
+  }
+  return items;
+}
 /* 统一点击委托：删除标签 / 添加其他 / 删除药行 / 标签选中 */
 document.addEventListener('click',function(e){
+  if(!e.target.closest('.chip-add-form')){
+    var open=document.querySelector('.chip-add-form');
+    if(open)open.remove();
+  }
   var del=e.target.closest('.chip-del');
   if(del){var chip=del.closest('.chip');if(chip)removeChip(chip);return}
   var add=e.target.closest('.add-chip');
@@ -745,6 +819,7 @@ function afterFill(id){
   if(id==='moodChips')refreshMoodStyle();
   if(id==='fallChips'||id==='wakeupChips')updateSleepInfo();
   if(id==='negChips')updateNegHint();
+  if(id==='exChips')renderExDurations();
   if(id==='periodChips'){CUR_PERIOD=getVal('periodChips')||'m';renderStats()}
   if(id==='metricChips'){CUR_METRIC=getVal('metricChips')||'mood';drawMetricChart()}
 }
@@ -800,7 +875,15 @@ function collect(){
     meals:{b:getVal('mB'),l:getVal('mL'),d:getVal('mD'),n:getVal('mN')},
     energy:getVal('energyChips')===''?null:+getVal('energyChips'),
     drive:getVal('driveChips'),
-    exercise:{types:getVals('exChips'),minutes:$('#exMin').value?+$('#exMin').value:null},
+    exercise:{types:getVals('exChips'),items:(function(){
+      var out=[];
+      $$('#exDurations .ex-dur').forEach(function(row){
+        var t=row.getAttribute('data-type');
+        var m=row.querySelector('.ex-min').value;
+        if(t&&m!=='')out.push({type:t,minutes:+m});
+      });
+      return out;
+    })()},
     symptoms:getVals('symChips'),symptomNote:$('#symNote').value.trim(),
     triggers:getVals('trigChips'),triggerNote:$('#trigNote').value.trim(),
     meds:(function(){
@@ -821,8 +904,9 @@ function collect(){
 }
 function fillForm(r){
   clearChips();
-  $('#bedTime').value='';$('#riseTime').value='';$('#exMin').value='';
+  $('#bedTime').value='';$('#riseTime').value='';
   $('#symNote').value='';$('#trigNote').value='';$('#dayNote').value='';
+  renderExDurations();
   renderMedRows(medRowsFromRecord(r));
   if(!r){refreshMoodStyle();updateSleepInfo();updateNegHint();return}
   if(r.mood!=null)setVal('moodChips',String(r.mood));
@@ -835,7 +919,26 @@ function fillForm(r){
   if(r.meals){setVal('mB',r.meals.b||'');setVal('mL',r.meals.l||'');setVal('mD',r.meals.d||'');setVal('mN',r.meals.n||'')}
   if(r.energy!=null)setVal('energyChips',String(r.energy));
   if(r.drive)setVal('driveChips',r.drive);
-  if(r.exercise){setVals('exChips',r.exercise.types||[]);$('#exMin').value=r.exercise.minutes||''}
+  if(r.exercise){
+    var items=(r.exercise.items||[]).slice();
+    var types=(r.exercise.types||[]).slice();
+    if(!types.length)types=items.map(function(it){return it.type});
+    if(!items.length&&r.exercise.minutes&&types.length)items=[{type:types[0],minutes:r.exercise.minutes}];
+    var c=readCustom(),changed=false;
+    types.forEach(function(t){
+      if(t!=='无运动'&&!findChip($('#exChips'),t)){
+        c['exChips']=c['exChips']||[];
+        if(c['exChips'].indexOf(t)<0){c['exChips'].push(t);changed=true;}
+      }
+    });
+    if(changed){saveCustom(c);renderGroup('exChips');}
+    setVals('exChips',types);
+    renderExDurations();
+    items.forEach(function(it){
+      var row=$$('#exDurations .ex-dur').filter(function(x){return x.getAttribute('data-type')===it.type})[0];
+      if(row)row.querySelector('.ex-min').value=it.minutes;
+    });
+  }
   setVals('symChips',r.symptoms||[]);$('#symNote').value=r.symptomNote||'';
   setVals('trigChips',r.triggers||[]);$('#trigNote').value=r.triggerNote||'';
   if(r.neg)setVal('negChips',r.neg);
@@ -855,21 +958,23 @@ function renderMedRows(rows){
   var box=$('#medRows');box.innerHTML='';
   (rows.length?rows:[{name:'盐酸米安色林',dose:''},{name:'安眠药',dose:''}]).forEach(function(m){addMedRow(m.name,m.dose)});
 }
+var ROW_UID=0;
 function addMedRow(name,dose){
+  var uid='medDose-r'+(ROW_UID++);
   var row=document.createElement('div');row.className='med-row';
   row.innerHTML='<div class="med-head"><input class="med-name" type="text" placeholder="药名，如：盐酸米安色林" value="'+esc(name||'')+'"><button class="med-del" type="button" title="删除这味药">✕</button></div>'
-    +'<div class="chips dose-chips" data-group="medDose" data-mode="single"></div>';
+    +'<div class="chips dose-chips" data-group="'+uid+'" data-mode="single"></div>';
   $('#medRows').appendChild(row);
-  renderGroup('medDose');
+  renderGroup(uid);
   if(dose){
     var box=row.querySelector('.dose-chips');
     var chip=findChip(box,dose);
     if(!chip){
       var c=readCustom();
-      c['medDose']=c['medDose']||[];
-      if(c['medDose'].indexOf(dose)<0)c['medDose'].push(dose);
+      c[uid]=c[uid]||[];
+      if(c[uid].indexOf(dose)<0)c[uid].push(dose);
       saveCustom(c);
-      renderGroup('medDose');
+      renderGroup(uid);
       chip=findChip(row.querySelector('.dose-chips'),dose);
     }
     if(chip)chip.classList.add('selected');
@@ -924,6 +1029,7 @@ $('#addMedBtn').addEventListener('click',function(){addMedRow('','')});
 ['fallChips','wakeupChips'].forEach(function(id){$('#'+id).addEventListener('change',updateSleepInfo)});
 $('#negChips').addEventListener('change',updateNegHint);
 $('#moodChips').addEventListener('change',refreshMoodStyle);
+$('#exChips').addEventListener('change',renderExDurations);
 
 /* ================= 页签 ================= */
 function switchTab(name){
@@ -968,7 +1074,12 @@ function wakeNum(r){
 var METRICS={
   mood:{name:'情绪分',unit:'',max:10,val:function(r){return r&&r.mood!=null?r.mood:null},color:'#8fb7bc'},
   sleep:{name:'睡眠时长',unit:'小时',max:12,val:function(r){return sleepEstMin(r)!=null?r1(sleepEstMin(r)/60):null},color:'#7d8fc9'},
-  exer:{name:'运动时长',unit:'分钟',max:0,val:function(r){return (r&&r.exercise&&r.exercise.minutes&&r.exercise.types.join('').indexOf('无运动')<0)?r.exercise.minutes:null},color:'#8fae72'},
+  exer:{name:'运动时长',unit:'分钟',max:0,val:function(r){
+    var items=exInfo(r);
+    if(!items.length)return null;
+    var total=0;items.forEach(function(it){total+=it.minutes});
+    return total;
+  },color:'#8fae72'},
   energy:{name:'精力分',unit:'',max:10,val:function(r){return r&&r.energy!=null?r.energy:null},color:'#b08fc0'},
   appetite:{name:'食欲（0没吃～3不错）',unit:'',max:3,val:appetiteScore,color:'#c99a6b'},
   wake:{name:'夜醒次数',unit:'次',max:4,val:wakeNum,color:'#c98f8f'}
@@ -1144,11 +1255,24 @@ function buildSummary(N,pname){
   var para=rs.filter(function(r){return r.drive&&r.drive.indexOf('瘫痪')>=0}).length;
   var noDrive=rs.filter(function(r){return r.drive&&r.drive!=='无'}).length;
   L.push('动力：不想做事 '+noDrive+' 天'+(para?'，其中执行力瘫痪 '+para+' 天':''));
-  var exDays=rs.filter(function(r){return r.exercise&&r.exercise.types&&r.exercise.types.length&&r.exercise.types.join('').indexOf('无运动')<0});
+  var exDays=[],exTot=0,typeAgg={};
+  rs.forEach(function(r){
+    var items=exInfo(r);
+    if(items.length){
+      exDays.push(r);
+      var seen={};
+      items.forEach(function(it){
+        exTot+=it.minutes;
+        if(!seen[it.type]){seen[it.type]=1;typeAgg[it.type]=typeAgg[it.type]||{days:0,mins:0};typeAgg[it.type].days++;}
+        typeAgg[it.type].mins+=it.minutes;
+      });
+    }
+  });
   if(exDays.length){
-    var total=exDays.map(function(r){return r.exercise.minutes||0}).reduce(function(x,y){return x+y},0);
-    var exM=exDays.map(function(r){return r.exercise.minutes}).filter(function(v){return v});
-    L.push('运动：'+exDays.length+' 天'+(exM.length?'，平均每次约 '+Math.round(avg(exM))+' 分钟':''));
+    var exLine='运动：'+exDays.length+' 天，累计约 '+exTot+' 分钟';
+    var tns=Object.keys(typeAgg);
+    if(tns.length)exLine+='；'+tns.map(function(t){return t+' '+typeAgg[t].mins+' 分钟（'+typeAgg[t].days+' 天）'}).join('、');
+    L.push(exLine);
   }else L.push('运动：0 天');
   var freq={};
   rs.forEach(function(r){(r.symptoms||[]).forEach(function(s){if(s!=='无不适')freq[s]=(freq[s]||0)+1})});
@@ -1232,11 +1356,9 @@ function detailHTML(r){
   }
   push('精力',r.energy!=null?r.energy+'/10':'');
   push('动力',r.drive);
-  if(r.exercise){
-    var e=[];
-    (r.exercise.types||[]).forEach(function(t){e.push(t)});
-    if(r.exercise.minutes)e.push(r.exercise.minutes+' 分钟');
-    push('运动',e.join('、'));
+  var exItems=exInfo(r);
+  if(exItems.length){
+    push('运动',exItems.map(function(it){return it.type+' '+it.minutes+' 分钟'}).join('、'));
   }
   var sy=(r.symptoms||[]).slice();
   if(r.symptomNote)sy.push(r.symptomNote);
@@ -1257,7 +1379,7 @@ function histTags(r){
   if(r.sleep&&r.sleep.wakeups)t.push('夜醒'+r.sleep.wakeups.replace('次及以上','+'));
   if(r.drive&&r.drive!=='无')t.push('动力低');
   if(r.drive&&r.drive.indexOf('瘫痪')>=0){t.pop();t.push('执行力瘫痪')}
-  if(r.exercise&&r.exercise.types.length&&r.exercise.types.join('').indexOf('无运动')<0)t.push('有运动');
+  if(exInfo(r).length)t.push('有运动');
   (r.meds||[]).forEach(function(m){if(m&&m.name&&m.dose&&m.dose!=='未服用')t.push('💊'+m.name+' '+m.dose)});
   if(r.med&&r.med!=='未服用')t.push('💊米安色林 '+r.med);
   if(r.sleepMed&&r.sleepMed!=='未服用')t.push('💊安眠药 '+r.sleepMed);
@@ -1442,6 +1564,14 @@ async function afterLogin(user,email){
 window.addEventListener('resize',function(){
   if($('#tab-stats').classList.contains('active'))drawMetricChart();
 });
+
+/* ================= 进入封面 ================= */
+$('#coverEnter').addEventListener('click',function(){
+  var c=$('#cover');if(!c)return;
+  c.classList.add('gone');
+  setTimeout(function(){var e=$('#cover');if(e)e.remove()},1000);
+});
+
 async function init(){
   records=loadLocal();
   renderGroup('exChips');
