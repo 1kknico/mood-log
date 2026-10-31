@@ -97,6 +97,19 @@ textarea{resize:vertical;min-height:70px}
 .meal-row .chips{flex:1}
 .meal-row .chip{padding:6px 11px;font-size:13px}
 
+/* 用药动态行 */
+.med-row{margin-bottom:12px}
+.med-head{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.med-head input{flex:1}
+.med-del{flex:0 0 36px;height:40px;border:1.5px solid var(--chip-line);background:var(--chip-bg);border-radius:10px;color:var(--red);font-size:15px;cursor:pointer;font-family:inherit}
+.med-del:active{transform:scale(.95)}
+.dose-chips .chip{padding:6px 11px;font-size:13px}
+.chip-del{display:inline-block;margin-left:6px;color:#b0b6bf;font-size:12px;font-weight:400;cursor:pointer}
+.chip.selected .chip-del{color:rgba(255,255,255,.85)}
+.chip-add-form{display:inline-flex;gap:6px;align-items:center}
+.chip-input{width:120px;padding:6px 10px;font-size:13px;border-radius:999px}
+.chip-ok{border:1.5px solid var(--accent);background:var(--accent);color:#fff;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+
 /* ---------- 保存栏 ---------- */
 .savebar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid #eceef2;padding:10px 16px calc(10px + env(safe-area-inset-bottom));z-index:40}
 .savebar .inner{max-width:720px;margin:0 auto}
@@ -267,7 +280,70 @@ create policy "own rows" on public.daily_records
   </div>
 
   <div class="card">
-    <h2>💤 睡眠<span class="sub">能填多少填多少，不必勉强</span></h2>
+    <h2>⚡ 精力 · 动力 <span class="req">* 必填</span></h2>
+    <div class="field-label">精力打分（0 = 没有任何力气 ～ 10 = 精力充沛）</div>
+    <div class="chips num-chips" id="energyChips" data-mode="single">
+      <button class="chip" data-value="0">0</button><button class="chip" data-value="1">1</button>
+      <button class="chip" data-value="2">2</button><button class="chip" data-value="3">3</button>
+      <button class="chip" data-value="4">4</button><button class="chip" data-value="5">5</button>
+      <button class="chip" data-value="6">6</button><button class="chip" data-value="7">7</button>
+      <button class="chip" data-value="8">8</button><button class="chip" data-value="9">9</button>
+      <button class="chip" data-value="10">10</button>
+    </div>
+    <div class="field-label">今天有没有「不想做事 / 执行力瘫痪」</div>
+    <div class="chips" id="driveChips" data-mode="single">
+      <button class="chip" data-value="无">无</button>
+      <button class="chip" data-value="有点不想动">有点不想动</button>
+      <button class="chip" data-value="明显不想动">明显不想动</button>
+      <button class="chip" data-value="执行力瘫痪（几乎无法行动）">执行力瘫痪（几乎无法行动）</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>💊 用药 <span class="req">* 必填</span><span class="sub">药可增可减，剂量选按钮，或点「其他」自定义</span></h2>
+    <div id="medRows"></div>
+    <div class="btnrow"><button class="btn" id="addMedBtn">＋ 添加一种药</button></div>
+    <div class="hint">没有服药就把这一行的剂量留空；换药、停药直接改这一行，历史记录不受影响。</div>
+  </div>
+
+  <div class="card">
+    <h2>🍚 吃饭 · 食欲 <span class="req">* 必填</span><span class="sub">早 / 中 / 晚 / 宵夜</span></h2>
+    <div class="meal-row"><span class="mname">早餐</span>
+      <div class="chips" id="mB" data-mode="single">
+        <button class="chip" data-value="没吃">没吃</button>
+        <button class="chip" data-value="吃得少">吃得少</button>
+        <button class="chip" data-value="正常">正常</button>
+        <button class="chip" data-value="吃得不错">吃得不错</button>
+      </div>
+    </div>
+    <div class="meal-row"><span class="mname">午餐</span>
+      <div class="chips" id="mL" data-mode="single">
+        <button class="chip" data-value="没吃">没吃</button>
+        <button class="chip" data-value="吃得少">吃得少</button>
+        <button class="chip" data-value="正常">正常</button>
+        <button class="chip" data-value="吃得不错">吃得不错</button>
+      </div>
+    </div>
+    <div class="meal-row"><span class="mname">晚餐</span>
+      <div class="chips" id="mD" data-mode="single">
+        <button class="chip" data-value="没吃">没吃</button>
+        <button class="chip" data-value="吃得少">吃得少</button>
+        <button class="chip" data-value="正常">正常</button>
+        <button class="chip" data-value="吃得不错">吃得不错</button>
+      </div>
+    </div>
+    <div class="meal-row"><span class="mname">宵夜</span>
+      <div class="chips" id="mN" data-mode="single">
+        <button class="chip" data-value="没吃">没吃</button>
+        <button class="chip" data-value="吃得少">吃得少</button>
+        <button class="chip" data-value="正常">正常</button>
+        <button class="chip" data-value="吃得不错">吃得不错</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>💤 睡眠 <span class="req">* 必填</span><span class="sub">上床、起床时间必填，其余能填多少填多少</span></h2>
     <div class="grid2">
       <div><div class="field-label">上床时间</div><input type="time" id="bedTime"></div>
       <div><div class="field-label">起床时间</div><input type="time" id="riseTime"></div>
@@ -299,127 +375,29 @@ create policy "own rows" on public.daily_records
   </div>
 
   <div class="card">
-    <h2>🍚 吃饭 · 食欲<span class="sub">早 / 中 / 晚</span></h2>
-    <div class="meal-row"><span class="mname">早餐</span>
-      <div class="chips" id="mB" data-mode="single">
-        <button class="chip" data-value="没吃">没吃</button>
-        <button class="chip" data-value="吃得少">吃得少</button>
-        <button class="chip" data-value="正常">正常</button>
-        <button class="chip" data-value="吃得不错">吃得不错</button>
-      </div>
-    </div>
-    <div class="meal-row"><span class="mname">午餐</span>
-      <div class="chips" id="mL" data-mode="single">
-        <button class="chip" data-value="没吃">没吃</button>
-        <button class="chip" data-value="吃得少">吃得少</button>
-        <button class="chip" data-value="正常">正常</button>
-        <button class="chip" data-value="吃得不错">吃得不错</button>
-      </div>
-    </div>
-    <div class="meal-row"><span class="mname">晚餐</span>
-      <div class="chips" id="mD" data-mode="single">
-        <button class="chip" data-value="没吃">没吃</button>
-        <button class="chip" data-value="吃得少">吃得少</button>
-        <button class="chip" data-value="正常">正常</button>
-        <button class="chip" data-value="吃得不错">吃得不错</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>⚡ 精力 · 动力</h2>
-    <div class="field-label">精力打分（0 = 没有任何力气 ～ 10 = 精力充沛）</div>
-    <div class="chips num-chips" id="energyChips" data-mode="single">
-      <button class="chip" data-value="0">0</button><button class="chip" data-value="1">1</button>
-      <button class="chip" data-value="2">2</button><button class="chip" data-value="3">3</button>
-      <button class="chip" data-value="4">4</button><button class="chip" data-value="5">5</button>
-      <button class="chip" data-value="6">6</button><button class="chip" data-value="7">7</button>
-      <button class="chip" data-value="8">8</button><button class="chip" data-value="9">9</button>
-      <button class="chip" data-value="10">10</button>
-    </div>
-    <div class="field-label">今天有没有「不想做事 / 执行力瘫痪」</div>
-    <div class="chips" id="driveChips" data-mode="single">
-      <button class="chip" data-value="无">无</button>
-      <button class="chip" data-value="有点不想动">有点不想动</button>
-      <button class="chip" data-value="明显不想动">明显不想动</button>
-      <button class="chip" data-value="执行力瘫痪（几乎无法行动）">执行力瘫痪（几乎无法行动）</button>
-    </div>
-  </div>
-
-  <div class="card">
     <h2>🏃 运动<span class="sub">动一点点也算数</span></h2>
-    <div class="chips" id="exChips" data-mode="multi">
-      <button class="chip" data-value="无运动" data-solo="1">无运动</button>
-      <button class="chip" data-value="快走">快走</button>
-      <button class="chip" data-value="慢跑">慢跑</button>
-      <button class="chip" data-value="羽毛球">羽毛球</button>
-      <button class="chip" data-value="健身">健身</button>
-      <button class="chip" data-value="拉伸/瑜伽">拉伸/瑜伽</button>
-      <button class="chip" data-value="骑行">骑行</button>
-      <button class="chip" data-value="其他">其他</button>
-    </div>
+    <div class="chips" id="exChips" data-mode="multi"></div>
     <div class="field-label">运动时长（分钟，可选）</div>
     <input type="number" id="exMin" min="0" max="600" step="5" inputmode="numeric" placeholder="例如 30">
   </div>
 
   <div class="card">
     <h2>🩹 躯体症状<span class="sub">可多选</span></h2>
-    <div class="chips" id="symChips" data-mode="multi">
-      <button class="chip" data-value="无不适" data-solo="1">无不适</button>
-      <button class="chip" data-value="头疼">头疼</button>
-      <button class="chip" data-value="头晕">头晕</button>
-      <button class="chip" data-value="耳鸣">耳鸣</button>
-      <button class="chip" data-value="心慌/心跳快">心慌/心跳快</button>
-      <button class="chip" data-value="胸闷">胸闷</button>
-      <button class="chip" data-value="胃口变差">胃口变差</button>
-      <button class="chip" data-value="胃口亢进">胃口亢进</button>
-      <button class="chip" data-value="胃胀/恶心">胃胀/恶心</button>
-      <button class="chip" data-value="记忆力变差">记忆力变差</button>
-      <button class="chip" data-value="注意力难集中">注意力难集中</button>
-      <button class="chip" data-value="肩颈紧绷">肩颈紧绷</button>
-      <button class="chip" data-value="肌肉酸痛">肌肉酸痛</button>
-      <button class="chip" data-value="身体沉重疲乏">身体沉重疲乏</button>
-      <button class="chip" data-value="其他">其他</button>
-    </div>
+    <div class="chips" id="symChips" data-mode="multi"></div>
     <div class="field-label">补充说明（可选，如程度、部位）</div>
     <input type="text" id="symNote" placeholder="例如：午后头疼，胀痛，持续两小时">
   </div>
 
   <div class="card">
     <h2>🌧 触发事件<span class="sub">可多选</span></h2>
-    <div class="chips" id="trigChips" data-mode="multi">
-      <button class="chip" data-value="无" data-solo="1">无</button>
-      <button class="chip" data-value="工作压力">工作压力</button>
-      <button class="chip" data-value="加班">加班</button>
-      <button class="chip" data-value="吵架/冲突">吵架/冲突</button>
-      <button class="chip" data-value="人际摩擦">人际摩擦</button>
-      <button class="chip" data-value="长时间内耗">长时间内耗</button>
-      <button class="chip" data-value="身体不适">身体不适</button>
-      <button class="chip" data-value="睡眠太差">睡眠太差</button>
-      <button class="chip" data-value="经济压力">经济压力</button>
-      <button class="chip" data-value="家庭事务">家庭事务</button>
-      <button class="chip" data-value="纪念日/回忆">纪念日/回忆</button>
-      <button class="chip" data-value="其他">其他</button>
-    </div>
+    <div class="chips" id="trigChips" data-mode="multi"></div>
     <div class="field-label">发生了什么？什么事情之后情绪明显变差？（可选）</div>
     <textarea id="trigNote" placeholder="简单写几句就好，也可以只写关键词"></textarea>
   </div>
 
   <div class="card">
-    <h2>💊 用药 · 盐酸米安色林</h2>
-    <div class="chips" id="medChips" data-mode="single">
-      <button class="chip" data-value="未服用">未服用</button>
-      <button class="chip" data-value="半粒">半粒</button>
-      <button class="chip" data-value="一粒">一粒</button>
-    </div>
-  </div>
-
-  <div class="card">
     <h2>🕯 消极想法<span class="sub">如实记录就好</span></h2>
-    <div class="chips" id="negChips" data-mode="single">
-      <button class="chip" data-value="无">无</button>
-      <button class="chip" data-value="有短暂想法、无计划">有短暂想法、无计划</button>
-    </div>
+    <div class="chips" id="negChips" data-mode="single"></div>
     <div class="neg-hint" id="negHint">
       谢谢你如实记录。如果这类想法变多、变强，或久久不散，请告诉你的医生，也可以拨打心理援助热线 <b>12356</b>（24小时）。你不必一个人扛着。
     </div>
@@ -486,7 +464,7 @@ create policy "own rows" on public.daily_records
 
 <footer>
   <div class="hotline">🫂 全国心理援助热线 <b>12356</b>（24小时）· 如遇紧急情况请及时拨打或就医</div>
-  <div>云端模式下数据加密存储在你的 Supabase 账户中，仅你自己可见。</div>
+  <div>数据只保存在当前设备的浏览器里，不上传网络。<br>请隔几天在 ⚙️ 里点一次「复制全部记录」，粘贴到微信收藏备份。</div>
 </footer>
 
 <div class="savebar" id="saveBar"><div class="inner">
@@ -650,27 +628,110 @@ function renderModeBadge(){
     b.textContent='☁️ 云端账户 · '+(CURRENT_USER&&CURRENT_USER.email||'');
   }else{
     b.className='mode-badge local';
-    b.textContent='📍 本地模式 · 数据仅存本机（可在 ⚙️ 里升级为云端）';
+    b.textContent='📍 本地模式 · 数据仅存本机浏览器';
   }
 }
 
-/* ================= 芯片交互 ================= */
+/* ================= 自定义标签（可编辑其他 / 可删除） ================= */
+var CUSTOM_KEY='dailyLog.custom';
+var HIDDEN_KEY='dailyLog.hidden';
+var CUSTOM_GROUPS={
+  exChips:{solo:'无运动',defaults:['无运动','快走','慢跑','羽毛球','健身','拉伸/瑜伽','骑行'],addLabel:'其他',placeholder:'例如：打篮球 / 游泳'},
+  symChips:{solo:'无不适',defaults:['无不适','头疼','头晕','耳鸣','心慌/心跳快','胸闷','胃口变差','胃口亢进','胃胀/恶心','记忆力变差','注意力难集中','肩颈紧绷','肌肉酸痛','身体沉重疲乏'],addLabel:'其他',placeholder:'例如：手抖 / 胃痛'},
+  trigChips:{solo:'无',defaults:['无','工作压力','加班','吵架/冲突','人际摩擦','长时间内耗','身体不适','睡眠太差','经济压力','家庭事务','纪念日/回忆'],addLabel:'其他',placeholder:'例如：考试 / 搬家'},
+  negChips:{solo:'',defaults:['无'],fixed:['无'],addLabel:'其他',placeholder:'例如：有短暂想法、无计划'},
+  medDose:{solo:'',defaults:['半粒','一粒'],addLabel:'其他',placeholder:'例如：2粒 / 半片 / 5mg'}
+};
+function readCustom(){try{return JSON.parse(localStorage.getItem(CUSTOM_KEY))||{}}catch(e){return {}}}
+function saveCustom(o){try{localStorage.setItem(CUSTOM_KEY,JSON.stringify(o))}catch(e){}}
+function readHidden(){try{return JSON.parse(localStorage.getItem(HIDDEN_KEY))||{}}catch(e){return {}}}
+function saveHidden(o){try{localStorage.setItem(HIDDEN_KEY,JSON.stringify(o))}catch(e){}}
+function findChip(box,v){var out=null;box.querySelectorAll('.chip').forEach(function(c){if(c.getAttribute('data-value')===v)out=c});return out}
+function groupOf(box){return box.id||box.getAttribute('data-group')||''}
+function renderGroup(groupId){
+  var cfg=CUSTOM_GROUPS[groupId];if(!cfg)return;
+  var customs=(readCustom()[groupId])||[];
+  var hidden=(readHidden()[groupId])||[];
+  var values=cfg.defaults.concat(customs).filter(function(v){return hidden.indexOf(v)<0});
+  var boxes=groupId==='medDose'?$$('.dose-chips'):[document.getElementById(groupId)];
+  boxes.forEach(function(box){
+    if(!box)return;
+    var prev=[];box.querySelectorAll('.chip.selected').forEach(function(c){prev.push(c.getAttribute('data-value'))});
+    box.innerHTML='';
+    values.forEach(function(v){
+      var btn=document.createElement('button');btn.type='button';btn.className='chip';btn.setAttribute('data-value',v);
+      if(cfg.solo===v)btn.setAttribute('data-solo','1');
+      var isFixed=cfg.fixed&&cfg.fixed.indexOf(v)>=0;
+      btn.innerHTML=esc(v)+(isFixed?'':'<span class="chip-del">✕</span>');
+      box.appendChild(btn);
+    });
+    var add=document.createElement('button');add.type='button';add.className='chip add-chip';add.innerHTML='＋ '+cfg.addLabel;
+    box.appendChild(add);
+    prev.forEach(function(v){var c=findChip(box,v);if(c)c.classList.add('selected')});
+    if(box.id==='negChips')updateNegHint();
+  });
+}
+function openChipInput(box){
+  var old=box.querySelector('.chip-add-form');if(old)old.remove();
+  var cfg=CUSTOM_GROUPS[groupOf(box)];
+  var wrap=document.createElement('span');wrap.className='chip-add-form';
+  wrap.innerHTML='<input class="chip-input" placeholder="'+esc(cfg.placeholder||'输入后点确定')+'" maxlength="12"><button class="chip-ok">确定</button>';
+  box.appendChild(wrap);
+  var inp=wrap.querySelector('.chip-input');inp.focus();
+  function commit(){
+    var v=inp.value.trim();if(!v)return;
+    var g=groupOf(box);
+    var c=readCustom();
+    c[g]=c[g]||[];
+    if(c[g].indexOf(v)<0)c[g].push(v);
+    saveCustom(c);
+    renderGroup(g);
+    var chip=findChip(box,v);
+    if(chip)chip.classList.add('selected');
+    box.dispatchEvent(new Event('change'));
+  }
+  wrap.querySelector('.chip-ok').addEventListener('click',commit);
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter')commit()});
+}
+function removeChip(chip){
+  var box=chip.closest('.chips');if(!box)return;
+  var g=groupOf(box);
+  var v=chip.getAttribute('data-value');
+  var c=readCustom();
+  if((c[g]||[]).indexOf(v)>=0){
+    c[g]=c[g].filter(function(x){return x!==v});
+    saveCustom(c);
+  }else{
+    var h=readHidden();
+    h[g]=h[g]||[];
+    if(h[g].indexOf(v)<0)h[g].push(v);
+    saveHidden(h);
+  }
+  renderGroup(g);
+}
+/* 统一点击委托：删除标签 / 添加其他 / 删除药行 / 标签选中 */
 document.addEventListener('click',function(e){
+  var del=e.target.closest('.chip-del');
+  if(del){var chip=del.closest('.chip');if(chip)removeChip(chip);return}
+  var add=e.target.closest('.add-chip');
+  if(add){openChipInput(add.closest('.chips'));return}
+  var meddel=e.target.closest('.med-del');
+  if(meddel){var row=meddel.closest('.med-row');if(row)row.remove();return}
   var chip=e.target.closest('.chip');if(!chip)return;
   var box=chip.closest('.chips');if(!box)return;
   var multi=box.getAttribute('data-mode')==='multi';
   var was=chip.classList.contains('selected');
   if(!multi){
-    $$('#'+box.id+' .chip').forEach(function(c){c.classList.remove('selected')});
+    box.querySelectorAll('.chip').forEach(function(c){c.classList.remove('selected')});
     chip.classList.add('selected');
   }else if(chip.getAttribute('data-solo')==='1'){
-    $$('#'+box.id+' .chip').forEach(function(c){c.classList.remove('selected')});
+    box.querySelectorAll('.chip').forEach(function(c){c.classList.remove('selected')});
     chip.classList.add('selected');
   }else{
     if(was)chip.classList.remove('selected');
     else{
       chip.classList.add('selected');
-      $$('#'+box.id+' [data-solo]').forEach(function(c){c.classList.remove('selected')});
+      box.querySelectorAll('[data-solo]').forEach(function(c){c.classList.remove('selected')});
     }
   }
   box.dispatchEvent(new Event('change'));
@@ -728,7 +789,7 @@ function updateSleepInfo(){
 }
 function updateNegHint(){
   var v=getVal('negChips');
-  $('#negHint').style.display=(v&&v.indexOf('有')===0)?'block':'none';
+  $('#negHint').style.display=(v&&v!=='无')?'block':'none';
 }
 
 /* ================= 表单收集 / 填充 ================= */
@@ -736,13 +797,23 @@ function collect(){
   return {
     mood:getVal('moodChips')===''?null:+getVal('moodChips'),
     sleep:{bed:$('#bedTime').value,fall:getVal('fallChips'),wakeups:getVal('wakeupChips'),rise:$('#riseTime').value,sleepy:getVal('sleepyChips')},
-    meals:{b:getVal('mB'),l:getVal('mL'),d:getVal('mD')},
+    meals:{b:getVal('mB'),l:getVal('mL'),d:getVal('mD'),n:getVal('mN')},
     energy:getVal('energyChips')===''?null:+getVal('energyChips'),
     drive:getVal('driveChips'),
     exercise:{types:getVals('exChips'),minutes:$('#exMin').value?+$('#exMin').value:null},
     symptoms:getVals('symChips'),symptomNote:$('#symNote').value.trim(),
     triggers:getVals('trigChips'),triggerNote:$('#trigNote').value.trim(),
-    med:getVal('medChips'),
+    meds:(function(){
+      var out=[];
+      $$('#medRows .med-row').forEach(function(row){
+        var n=row.querySelector('.med-name').value.trim();
+        var d='';
+        var sel=row.querySelector('.dose-chips .chip.selected');
+        if(sel)d=sel.getAttribute('data-value');
+        if(n)out.push({name:n,dose:d});
+      });
+      return out;
+    })(),
     neg:getVal('negChips'),
     note:$('#dayNote').value.trim(),
     updatedAt:new Date().toISOString()
@@ -752,6 +823,7 @@ function fillForm(r){
   clearChips();
   $('#bedTime').value='';$('#riseTime').value='';$('#exMin').value='';
   $('#symNote').value='';$('#trigNote').value='';$('#dayNote').value='';
+  renderMedRows(medRowsFromRecord(r));
   if(!r){refreshMoodStyle();updateSleepInfo();updateNegHint();return}
   if(r.mood!=null)setVal('moodChips',String(r.mood));
   if(r.sleep){
@@ -760,17 +832,50 @@ function fillForm(r){
     if(r.sleep.wakeups)setVal('wakeupChips',r.sleep.wakeups);
     if(r.sleep.sleepy)setVal('sleepyChips',r.sleep.sleepy);
   }
-  if(r.meals){setVal('mB',r.meals.b||'');setVal('mL',r.meals.l||'');setVal('mD',r.meals.d||'')}
+  if(r.meals){setVal('mB',r.meals.b||'');setVal('mL',r.meals.l||'');setVal('mD',r.meals.d||'');setVal('mN',r.meals.n||'')}
   if(r.energy!=null)setVal('energyChips',String(r.energy));
   if(r.drive)setVal('driveChips',r.drive);
   if(r.exercise){setVals('exChips',r.exercise.types||[]);$('#exMin').value=r.exercise.minutes||''}
   setVals('symChips',r.symptoms||[]);$('#symNote').value=r.symptomNote||'';
   setVals('trigChips',r.triggers||[]);$('#trigNote').value=r.triggerNote||'';
-  if(r.med)setVal('medChips',r.med);
   if(r.neg)setVal('negChips',r.neg);
   $('#dayNote').value=r.note||'';
   refreshMoodStyle();updateSleepInfo();updateNegHint();
 }
+/* 用药动态行 */
+function medRowsFromRecord(r){
+  var rows=[];
+  if(!r)return [];
+  if(Array.isArray(r.meds))r.meds.forEach(function(m){if(m&&m.name)rows.push({name:m.name,dose:(m.dose||'').trim()})});
+  if(r.med&&r.med!=='未服用')rows.push({name:'盐酸米安色林',dose:r.med});
+  if(r.sleepMed&&r.sleepMed!=='未服用')rows.push({name:'安眠药',dose:r.sleepMed});
+  return rows;
+}
+function renderMedRows(rows){
+  var box=$('#medRows');box.innerHTML='';
+  (rows.length?rows:[{name:'盐酸米安色林',dose:''},{name:'安眠药',dose:''}]).forEach(function(m){addMedRow(m.name,m.dose)});
+}
+function addMedRow(name,dose){
+  var row=document.createElement('div');row.className='med-row';
+  row.innerHTML='<div class="med-head"><input class="med-name" type="text" placeholder="药名，如：盐酸米安色林" value="'+esc(name||'')+'"><button class="med-del" type="button" title="删除这味药">✕</button></div>'
+    +'<div class="chips dose-chips" data-group="medDose" data-mode="single"></div>';
+  $('#medRows').appendChild(row);
+  renderGroup('medDose');
+  if(dose){
+    var box=row.querySelector('.dose-chips');
+    var chip=findChip(box,dose);
+    if(!chip){
+      var c=readCustom();
+      c['medDose']=c['medDose']||[];
+      if(c['medDose'].indexOf(dose)<0)c['medDose'].push(dose);
+      saveCustom(c);
+      renderGroup('medDose');
+      chip=findChip(row.querySelector('.dose-chips'),dose);
+    }
+    if(chip)chip.classList.add('selected');
+  }
+}
+
 function loadCurrent(){
   fillForm(records[curDate]);
   $('#existTip').style.display=records[curDate]?'block':'none';
@@ -796,11 +901,15 @@ async function removeRecord(date){
 }
 $('#saveBtn').addEventListener('click',async function(){
   var r=collect();
-  if(r.mood===null){
-    toast('先给情绪打个分吧（0–10 分）');
-    $('#moodChips').scrollIntoView({behavior:'smooth',block:'center'});
-    return;
+  function miss(msg,id){
+    toast(msg);
+    var el=$(id);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
   }
+  if(r.mood===null){miss('第①项：先给情绪打个分（0–10 分）','#moodChips');return}
+  if(r.energy===null){miss('第②项：精力分也要填一下（0–10 分）','#energyChips');return}
+  if(!r.meds.length){miss('第③项：用药至少要保留一行药名','#medRows');return}
+  if(!r.meals.b||!r.meals.l||!r.meals.d){miss('第④项：早/中/晚三餐都要选一下','#mB');return}
+  if(!r.sleep||!r.sleep.bed||!r.sleep.rise){miss('第⑤项：把上床、起床时间填上（能回忆个大概就行）','#bedTime');return}
   await persistRecord(curDate,r);
   $('#existTip').style.display='block';
   renderHeader();
@@ -810,6 +919,7 @@ $('#dateInput').addEventListener('change',function(){
   curDate=this.value||todayStr();
   loadCurrent();
 });
+$('#addMedBtn').addEventListener('click',function(){addMedRow('','')});
 ['bedTime','riseTime'].forEach(function(id){$('#'+id).addEventListener('input',updateSleepInfo)});
 ['fallChips','wakeupChips'].forEach(function(id){$('#'+id).addEventListener('change',updateSleepInfo)});
 $('#negChips').addEventListener('change',updateNegHint);
@@ -847,7 +957,7 @@ var MEAL_SCORE={'没吃':0,'吃得少':1,'正常':2,'吃得不错':3};
 function appetiteScore(r){
   if(!r||!r.meals)return null;
   var vs=[];
-  ['b','l','d'].forEach(function(k){var v=r.meals[k];if(v&&MEAL_SCORE.hasOwnProperty(v))vs.push(MEAL_SCORE[v])});
+  ['b','l','d','n'].forEach(function(k){var v=r.meals[k];if(v&&MEAL_SCORE.hasOwnProperty(v))vs.push(MEAL_SCORE[v])});
   return vs.length?avg(vs):null;
 }
 function wakeNum(r){
@@ -982,7 +1092,7 @@ function renderStats(){
   }
   var sleeps=rs.map(function(r){return sleepEstMin(r)}).filter(function(v){return v!=null});
   $('#stSleep').textContent=sleeps.length?fmtHour(avg(sleeps)):'–';
-  var negN=rs.filter(function(r){return r.neg&&r.neg.indexOf('有')===0}).length;
+  var negN=rs.filter(function(r){return r.neg&&r.neg!=='无'}).length;
   $('#stNeg').textContent=negN+' 天';
   $('#stNeg').className='v '+(negN>=Math.ceil(n/10)?'down':negN>=1?'flat':'up');
   drawMetricChart();
@@ -1027,7 +1137,8 @@ function buildSummary(N,pname){
   var pb=rs.filter(function(r){return r.meals&&poor(r.meals.b)}).length;
   var pl=rs.filter(function(r){return r.meals&&poor(r.meals.l)}).length;
   var pd=rs.filter(function(r){return r.meals&&poor(r.meals.d)}).length;
-  if(pb+pl+pd)L.push('食欲差：早 '+pb+' 天 / 午 '+pl+' 天 / 晚 '+pd+' 天');
+  var pn=rs.filter(function(r){return r.meals&&poor(r.meals.n)}).length;
+  if(pb+pl+pd+pn)L.push('食欲差：早 '+pb+' 天 / 午 '+pl+' 天 / 晚 '+pd+' 天 / 宵夜 '+pn+' 天');
   var en=rs.map(function(r){return r.energy}).filter(function(v){return v!=null});
   if(en.length)L.push('精力均分：'+r1(avg(en))+'/10');
   var para=rs.filter(function(r){return r.drive&&r.drive.indexOf('瘫痪')>=0}).length;
@@ -1047,12 +1158,31 @@ function buildSummary(N,pname){
   rs.forEach(function(r){(r.triggers||[]).forEach(function(s){if(s!=='无')tf[s]=(tf[s]||0)+1})});
   var ts=Object.keys(tf).sort(function(a,b){return tf[b]-tf[a]});
   if(ts.length)L.push('触发事件（出现次数）：'+ts.slice(0,N>100?5:4).map(function(k){return k+' '+tf[k]+'次'}).join('、'));
-  var mc={'一粒':0,'半粒':0,'未服用':0};
-  rs.forEach(function(r){if(r.med&&mc.hasOwnProperty(r.med))mc[r.med]++});
-  var medRec=rs.filter(function(r){return r.med}).length;
-  if(medRec)L.push('米安色林：有记录 '+medRec+' 天（一粒 '+mc['一粒']+' 天，半粒 '+mc['半粒']+' 天，未服用 '+mc['未服用']+' 天）');
-  var neg=rs.filter(function(r){return r.neg&&r.neg.indexOf('有')===0}).length;
-  L.push('消极想法（短暂、无计划）：出现 '+neg+' 天'+(neg?'，请复诊时告知医生':''));
+  var medAgg={};
+  function addMed(name,dose){
+    name=(name||'').trim();if(!name)return;
+    var d=(dose||'').trim();
+    medAgg[name]=medAgg[name]||{days:0,doses:{}};
+    if(d&&d!=='未服用'&&d!=='无'&&d!=='无服用'){medAgg[name].days++;medAgg[name].doses[d]=(medAgg[name].doses[d]||0)+1}
+  }
+  rs.forEach(function(r){
+    (r.meds||[]).forEach(function(m){addMed(m&&m.name,m&&m.dose)});
+    if(r.med)addMed('盐酸米安色林',r.med);
+    if(r.sleepMed)addMed('安眠药',r.sleepMed);
+  });
+  var medNames=Object.keys(medAgg);
+  if(medNames.length){
+    var ml=medNames.map(function(n){
+      var o=medAgg[n],ds=Object.keys(o.doses);
+      var s=n+' '+o.days+' 天';
+      if(ds.length>1)s+='（'+ds.map(function(d){return d+' '+o.doses[d]+' 天'}).join('，')+'）';
+      else if(ds.length===1)s+='（'+ds[0]+'）';
+      return s;
+    });
+    L.push('用药：'+ml.join('；'));
+  }
+  var neg=rs.filter(function(r){return r.neg&&r.neg!=='无'}).length;
+  L.push('消极想法：出现 '+neg+' 天'+(neg?'（内容见各日记录），请复诊时告知医生':''));
   L.push('生成时间：'+new Date().toLocaleString('zh-CN'));
   return L.join('\n');
 }
@@ -1097,6 +1227,7 @@ function detailHTML(r){
     if(r.meals.b)m.push('早 '+r.meals.b);
     if(r.meals.l)m.push('午 '+r.meals.l);
     if(r.meals.d)m.push('晚 '+r.meals.d);
+    if(r.meals.n)m.push('宵夜 '+r.meals.n);
     push('三餐',m.join('；'));
   }
   push('精力',r.energy!=null?r.energy+'/10':'');
@@ -1113,7 +1244,10 @@ function detailHTML(r){
   var tr=(r.triggers||[]).slice();
   if(r.triggerNote)tr.push(r.triggerNote);
   push('触发事件',tr.join('；'));
-  push('用药',r.med?(r.med==='未服用'?'未服用':'米安色林 '+r.med):'');
+  var meds=(r.meds||[]).map(function(m){return m.name+(m.dose?' '+m.dose:'')});
+  if(r.med&&r.med!=='未服用')meds.push('米安色林 '+r.med);
+  if(r.sleepMed&&r.sleepMed!=='未服用')meds.push('安眠药 '+r.sleepMed);
+  push('用药',meds.join('、'));
   push('消极想法',r.neg);
   push('备注',r.note);
   return rows.join('')||'<div class="dr"><span>无更多详情</span></div>';
@@ -1124,7 +1258,10 @@ function histTags(r){
   if(r.drive&&r.drive!=='无')t.push('动力低');
   if(r.drive&&r.drive.indexOf('瘫痪')>=0){t.pop();t.push('执行力瘫痪')}
   if(r.exercise&&r.exercise.types.length&&r.exercise.types.join('').indexOf('无运动')<0)t.push('有运动');
-  if(r.neg&&r.neg.indexOf('有')===0)t.push('⚠ 消极想法');
+  (r.meds||[]).forEach(function(m){if(m&&m.name&&m.dose&&m.dose!=='未服用')t.push('💊'+m.name+' '+m.dose)});
+  if(r.med&&r.med!=='未服用')t.push('💊米安色林 '+r.med);
+  if(r.sleepMed&&r.sleepMed!=='未服用')t.push('💊安眠药 '+r.sleepMed);
+  if(r.neg&&r.neg!=='无')t.push('⚠ 消极想法');
   return t;
 }
 function renderHistory(){
@@ -1134,11 +1271,10 @@ function renderHistory(){
   box.innerHTML=dates.map(function(d){
     var r=records[d];
     var tags=histTags(r).map(function(t){return '<span class="'+(t.indexOf('⚠')>=0?'warn':'')+'">'+esc(t)+'</span>'}).join('');
-    var medTag=r.med?'<span class="'+(r.med==='未服用'?'warn':'')+'">'+(r.med==='未服用'?'未服药':'药·'+r.med)+'</span>':'';
     return '<div class="hcard">'
       +'<div class="hhead"><div><span class="dt">'+mdCN(d)+'</span><span class="wd">'+weekdayCN(d)+'</span>'+(d===todayStr()?'<span class="today-tag">今天</span>':'')+'</div>'
       +'<span class="mbadge" style="background:'+(r.mood!=null?moodColor(r.mood):'#b6bcc4')+'">'+(r.mood!=null?r.mood+'分':'—')+'</span></div>'
-      +'<div class="htags">'+medTag+tags+'</div>'
+      +'<div class="htags">'+tags+'</div>'
       +'<details><summary>查看详情</summary><div class="hbody">'+detailHTML(r)+'</div></details>'
       +'<div class="hops"><button data-edit="'+d+'">✏️ 编辑</button><button data-del="'+d+'" class="danger">删除</button></div>'
       +'</div>';
@@ -1213,63 +1349,20 @@ function showRestoreModal(){
   $('#restoreCancelBtn').addEventListener('click',closeModal);
 }
 $('#gearBtn').addEventListener('click',function(){
-  if(MODE==='cloud'){
-    openModal(
-      '<h3>⚙️ 账户与设置</h3>'
-      +'<div class="mrow">当前：☁️ '+esc(CURRENT_USER&&CURRENT_USER.email||'')+'<br>记录总数：'+Object.keys(records).length+' 条（云端同步）</div>'
-      +'<div class="btnrow"><button class="btn primary" id="mRefreshBtn">🔄 重新同步云端</button></div>'
-      +'<div class="btnrow"><button class="btn" id="mCopyBtn">📋 复制全部记录</button><button class="btn" id="mRestoreBtn">📥 粘贴恢复</button></div>'
-      +'<div class="btnrow"><button class="btn" id="mPassBtn">修改密码</button><button class="btn" id="mExportBtn">导出备份文件</button><button class="btn danger-i" id="mLogoutBtn">退出登录</button></div>'
-      +'<div class="btnrow"><button class="btn" id="mCloseBtn1">关闭</button></div>'
-    );
-    $('#mRefreshBtn').addEventListener('click',async function(){
-      closeModal();toast('正在同步…');
-      var err=await enterCloud();
-      toast(err||'云端同步完成 ✓');
-      renderModeBadge();renderHeader();loadCurrent();
-      if($('#tab-stats').classList.contains('active'))renderStats();
-      if($('#tab-history').classList.contains('active'))renderHistory();
-    });
-    $('#mPassBtn').addEventListener('click',async function(){
-      var p=prompt('请输入新密码（至少6位）：');
-      if(!p)return;
-      if(p.length<6){toast('密码至少6位');return}
-      var res=await SB.auth.updateUser({password:p});
-      toast(res.error?('修改失败：'+res.error.message):'密码已修改 ✓');
-    });
-    $('#mExportBtn').addEventListener('click',function(){
-      download('状态记录备份-'+stamp()+'.json',JSON.stringify({app:'daily-log',version:2,exportedAt:new Date().toISOString(),records:records},null,2));
-      toast('已导出备份文件 ✓');
-    });
-    $('#mCopyBtn').addEventListener('click',function(){closeModal();copyAllRecords()});
-    $('#mRestoreBtn').addEventListener('click',showRestoreModal);
-    $('#mLogoutBtn').addEventListener('click',async function(){
-      await SB.auth.signOut();
-      CURRENT_USER=null;MODE='local';SB=null;
-      closeModal();
-      show('screen-auth');
-      $('#saveBar').style.display='none';
-      toast('已退出登录');
-    });
-    $('#mCloseBtn1').addEventListener('click',closeModal);
-  }else{
-    var n=Object.keys(records).length;
-    openModal(
-      '<h3>⚙️ 设置</h3>'
-      +'<div class="mrow">当前：📍 本地模式（数据仅保存在本机浏览器，已有 '+n+' 条记录）<br><br>升级为云账户后，手机、电脑登录同一账户即可自动同步，无需导入导出。升级时本机记录会自动上传。</div>'
-      +'<div class="btnrow"><button class="btn primary" id="mSetupBtn">☁️ 配置云端并注册账户</button></div>'
-      +'<div class="btnrow"><button class="btn" id="mCopyBtn2">📋 复制全部记录</button><button class="btn" id="mRestoreBtn2">📥 粘贴恢复</button></div>'
-      +'<div class="btnrow"><button class="btn" id="mExportBtn2">导出备份文件</button><button class="btn" id="mCloseBtn2">关闭</button></div>'
-    );
-    $('#mSetupBtn').addEventListener('click',function(){closeModal();showSetup()});
-    $('#mCopyBtn2').addEventListener('click',function(){closeModal();copyAllRecords()});
-    $('#mRestoreBtn2').addEventListener('click',showRestoreModal);
-    $('#mExportBtn2').addEventListener('click',function(){
-      download('状态记录备份-'+stamp()+'.json',JSON.stringify({app:'daily-log',version:2,exportedAt:new Date().toISOString(),records:records},null,2));
-      toast('已导出备份文件 ✓');
-    });
-    $('#mCloseBtn2').addEventListener('click',closeModal);
-  }
+  var n=Object.keys(records).length;
+  openModal(
+    '<h3>⚙️ 设置</h3>'
+    +'<div class="mrow">📍 本地模式：数据只保存在当前设备的浏览器里，不上传网络（已记录 '+n+' 条）。<br><br>保险习惯：隔几天点一次「复制全部记录」，粘贴到微信收藏；换手机或清理浏览器数据时，「粘贴恢复」能把记录找回来。</div>'
+    +'<div class="btnrow"><button class="btn" id="mCopyBtn2">📋 复制全部记录</button><button class="btn" id="mRestoreBtn2">📥 粘贴恢复</button></div>'
+    +'<div class="btnrow"><button class="btn" id="mExportBtn2">导出备份文件</button><button class="btn" id="mCloseBtn2">关闭</button></div>'
+  );
+  $('#mCopyBtn2').addEventListener('click',function(){closeModal();copyAllRecords()});
+  $('#mRestoreBtn2').addEventListener('click',showRestoreModal);
+  $('#mExportBtn2').addEventListener('click',function(){
+    download('状态记录备份-'+stamp()+'.json',JSON.stringify({app:'daily-log',version:2,exportedAt:new Date().toISOString(),records:records},null,2));
+    toast('已导出备份文件 ✓');
+  });
+  $('#mCloseBtn2').addEventListener('click',closeModal);
 });
 
 /* ================= 配置 / 登录界面逻辑 ================= */
@@ -1350,27 +1443,12 @@ window.addEventListener('resize',function(){
   if($('#tab-stats').classList.contains('active'))drawMetricChart();
 });
 async function init(){
-  var cfg=getSbConfig();
-  if(cfg){
-    var c=await ensureClient();
-    if(c){
-      var got=await c.auth.getUser();
-      if(got&&got.data&&got.data.user){
-        CURRENT_USER=got.data.user;MODE='cloud';
-        var err=await enterCloud();
-        showApp();
-        if(err)toast(err);
-        return;
-      }
-      showAuth();return;
-    }
-    // 有配置但组件加载失败：仍给登录机会
-    showAuth();return;
-  }
-  if(localStorage.getItem(LS_MODE)==='local'){
-    MODE='local';records=loadLocal();showApp();return;
-  }
-  showSetup();
+  records=loadLocal();
+  renderGroup('exChips');
+  renderGroup('symChips');
+  renderGroup('trigChips');
+  renderGroup('negChips');
+  showApp();
 }
 $('#dateInput').value=curDate;
 $('#dateInput').max=todayStr();
