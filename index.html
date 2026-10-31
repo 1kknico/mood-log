@@ -182,8 +182,7 @@ summary{cursor:pointer;font-size:13px;color:var(--accent-deep);user-select:none}
 footer{max-width:720px;margin:26px auto 0;padding:0 16px;text-align:center;font-size:12px;color:var(--muted);line-height:1.9}
 footer .hotline{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin-bottom:12px;color:#7a828e}
 footer .hotline b{color:#5f6771}
-/* 访客统计（不蒜子） */
-#busuanzi_container_site_pv,#busuanzi_container_site_uv{display:none}
+/* 访客统计（Abacus，免注册） */
 .visitor-stats{margin-top:8px;font-size:11.5px;color:#a9b4b0;line-height:1.9}
 .visitor-stats b{color:#7a8a86}
 .visitor-stats .stat-note{font-size:11px;opacity:.85}
@@ -516,9 +515,9 @@ create policy "own rows" on public.daily_records
 <footer>
   <div class="hotline">🫂 全国心理援助热线 <b>12356</b>（24小时）· 如遇紧急情况请及时拨打或就医</div>
   <div>数据只保存在当前设备的浏览器里，不上传网络。<br>请隔几天在 ⚙️ 里点一次「复制全部记录」，粘贴到微信收藏备份。</div>
-  <div class="visitor-stats">
-    <span id="busuanzi_container_site_pv">本站总访问量 <b><span id="busuanzi_value_site_pv">-</span></b> 次</span>
-    <span id="busuanzi_container_site_uv">· 访客 <b><span id="busuanzi_value_site_uv">-</span></b> 人</span>
+  <div class="visitor-stats" id="visitorStats">
+    <span id="visitPv">本站总访问量 <b>—</b> 次</span>
+    <span id="visitUv">· 访客 <b>—</b> 人</span>
     <div class="stat-note">（匿名访问统计，只计次数，不含任何记录内容）</div>
   </div>
 </footer>
@@ -532,7 +531,6 @@ create policy "own rows" on public.daily_records
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 <script>
 (function(){
 'use strict';
@@ -1641,6 +1639,31 @@ $('#coverEnter').addEventListener('click',function(){
   c.classList.add('gone');
   setTimeout(function(){var e=$('#cover');if(e)e.remove()},1000);
 });
+
+/* ================= 访客统计（Abacus 免注册计数） ================= */
+(function(){
+  var base='https://abacus.jasoncameron.dev';
+  var ns='default';
+  function setTxt(id,html){var el=document.getElementById(id);if(el)el.innerHTML=html}
+  function ok(d){return d&&typeof d.value==='number'}
+  function bust(){return '?t='+Date.now()}
+  // 访问量：每次打开 +1
+  fetch(base+'/hit/'+ns+'/1knico-mood-pv'+bust()).then(function(r){return r.json()}).then(function(d){
+    if(!ok(d))throw 0;
+    setTxt('visitPv','本站总访问量 <b>'+d.value+'</b> 次');
+  }).catch(function(){
+    setTxt('visitPv','本站总访问量 <b>—</b> 次（统计暂不可用）');
+  });
+  // 访客：同一浏览器只算一次（首次 +1，之后只读取）
+  var done=localStorage.getItem('dailyLog.uvDone');
+  fetch(base+(done?'/get/':'/hit/')+ns+'/1knico-mood-uv'+bust()).then(function(r){return r.json()}).then(function(d){
+    if(!ok(d))throw 0;
+    setTxt('visitUv','· 访客 <b>'+d.value+'</b> 人');
+    if(!done)localStorage.setItem('dailyLog.uvDone','1');
+  }).catch(function(){
+    setTxt('visitUv','');
+  });
+})();
 
 async function init(){
   records=loadLocal();
