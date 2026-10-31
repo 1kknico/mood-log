@@ -106,9 +106,18 @@ textarea{resize:vertical;min-height:70px}
 .dose-chips .chip{padding:6px 11px;font-size:13px}
 .chip-del{display:inline-block;margin-left:6px;color:#b0b6bf;font-size:12px;font-weight:400;cursor:pointer}
 .chip.selected .chip-del{color:rgba(255,255,255,.85)}
-.chip-add-form{display:inline-flex;gap:6px;align-items:center}
-.chip-input{width:120px;padding:6px 10px;font-size:13px;border-radius:999px}
+.chip-add-form{display:flex;flex-direction:column;gap:8px;width:100%}
+.chip-add-row{display:flex;gap:6px;align-items:center}
+.chip-suggest{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sug-label{font-size:12px;color:var(--muted)}
+.sug-chip{opacity:.8;font-size:12.5px;padding:5px 10px;border-style:dashed}
+.chip-input{width:140px;padding:6px 10px;font-size:13px;border-radius:999px}
 .chip-ok{border:1.5px solid var(--accent);background:var(--accent);color:#fff;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+/* 睡眠时间确认 */
+.time-row{display:flex;gap:8px;align-items:center}
+.time-row input{flex:1}
+.time-ok{flex:0 0 auto;border:1.5px solid var(--accent);border-radius:12px;height:42px;padding:0 14px;background:var(--accent-soft);color:var(--accent-deep);font-weight:600;font-size:13.5px;cursor:pointer;font-family:inherit}
+.time-ok:active{transform:scale(.96)}
 /* 运动分项时长 */
 .ex-dur{display:flex;align-items:center;gap:10px;margin-top:8px}
 .ex-name{flex:0 0 auto;font-size:13.5px;font-weight:600;color:#5b616b;min-width:60px}
@@ -379,8 +388,12 @@ create policy "own rows" on public.daily_records
   <div class="card">
     <h2>💤 睡眠 <span class="req">* 必填</span><span class="sub">上床、起床时间必填，其余能填多少填多少</span></h2>
     <div class="grid2">
-      <div><div class="field-label">上床时间</div><input type="time" id="bedTime"></div>
-      <div><div class="field-label">起床时间</div><input type="time" id="riseTime"></div>
+      <div><div class="field-label">上床时间</div>
+        <div class="time-row"><input type="time" id="bedTime"><button class="time-ok" data-for="bedTime">确定</button></div>
+      </div>
+      <div><div class="field-label">起床时间</div>
+        <div class="time-row"><input type="time" id="riseTime"><button class="time-ok" data-for="riseTime">确定</button></div>
+      </div>
     </div>
     <div class="field-label">大概多久入睡</div>
     <div class="chips" id="fallChips" data-mode="single">
@@ -711,20 +724,28 @@ function renderGroup(groupId){
 }
 function openChipInput(box){
   var old=box.querySelector('.chip-add-form');if(old)old.remove();
-  var cfg=CUSTOM_GROUPS[groupOf(box)];
+  var g=groupOf(box);
+  var cfg=CUSTOM_GROUPS[g];
   var ph=(cfg&&cfg.placeholder)||'例如：2粒 / 半片 / 5mg';
   var wrap=document.createElement('span');wrap.className='chip-add-form';
-  wrap.innerHTML='<input class="chip-input" placeholder="'+esc(ph)+'" maxlength="12"><button class="chip-ok">确定</button>';
-  box.appendChild(wrap);
-  var inp=wrap.querySelector('.chip-input');inp.focus();
-  inp.addEventListener('blur',function(){if(!inp.value.trim())wrap.remove()});
+  wrap.innerHTML='<span class="chip-add-row"><input class="chip-input" placeholder="'+esc(ph)+'" maxlength="12"><button class="chip-ok">确定</button></span>';
+  var inp=wrap.querySelector('.chip-input');
+  // 点击表单内部按钮时不收起
+  wrap.addEventListener('click',function(){wrap.dataset.keep='1'});
+  inp.addEventListener('blur',function(){
+    setTimeout(function(){
+      if(wrap.dataset.keep==='1')return;
+      if(!inp.value.trim()&&wrap.parentNode)wrap.remove();
+    },250);
+  });
   function commit(){
     var v=inp.value.trim();if(!v)return;
-    var g=groupOf(box);
     var c=readCustom();
     c[g]=c[g]||[];
     if(c[g].indexOf(v)<0)c[g].push(v);
     saveCustom(c);
+    var h=readHidden();
+    if((h[g]||[]).indexOf(v)>=0){h[g]=h[g].filter(function(x){return x!==v});saveHidden(h)}
     renderGroup(g);
     var chip=findChip(box,v);
     if(chip)chip.classList.add('selected');
@@ -732,21 +753,41 @@ function openChipInput(box){
   }
   wrap.querySelector('.chip-ok').addEventListener('click',commit);
   inp.addEventListener('keydown',function(e){if(e.key==='Enter')commit()});
+  // 已删除的标签：供参考恢复，避免误删找不回
+  var hidden=(readHidden()[g])||[];
+  if(hidden.length){
+    var sug=document.createElement('span');sug.className='chip-suggest';
+    var lab=document.createElement('span');lab.className='sug-label';lab.textContent='已删除（点一下恢复）：';
+    sug.appendChild(lab);
+    hidden.forEach(function(v){
+      var b=document.createElement('button');b.type='button';b.className='chip sug-chip';b.textContent=v;
+      b.addEventListener('click',function(){
+        var h=readHidden();
+        h[g]=(h[g]||[]).filter(function(x){return x!==v});
+        saveHidden(h);
+        renderGroup(g);
+        var chip=findChip(box,v);
+        if(chip)chip.classList.add('selected');
+        box.dispatchEvent(new Event('change'));
+        wrap.remove();
+        toast('已恢复「'+v+'」');
+      });
+      sug.appendChild(b);
+    });
+    wrap.appendChild(sug);
+  }
+  box.appendChild(wrap);
+  inp.focus();
 }
 function removeChip(chip){
   var box=chip.closest('.chips');if(!box)return;
   var g=groupOf(box);
   var v=chip.getAttribute('data-value');
-  var c=readCustom();
-  if((c[g]||[]).indexOf(v)>=0){
-    c[g]=c[g].filter(function(x){return x!==v});
-    saveCustom(c);
-  }else{
-    var h=readHidden();
-    h[g]=h[g]||[];
-    if(h[g].indexOf(v)<0)h[g].push(v);
-    saveHidden(h);
-  }
+  // 一律记为“已隐藏”，自定义标签也保留在池子里，方便从“＋其他”里恢复
+  var h=readHidden();
+  h[g]=h[g]||[];
+  if(h[g].indexOf(v)<0)h[g].push(v);
+  saveHidden(h);
   renderGroup(g);
 }
 /* 运动分项时长：选中的每项运动各有一行分钟输入 */
@@ -785,6 +826,7 @@ document.addEventListener('click',function(e){
     var open=document.querySelector('.chip-add-form');
     if(open)open.remove();
   }
+  if(e.target.closest('.chip-suggest'))return;
   var del=e.target.closest('.chip-del');
   if(del){var chip=del.closest('.chip');if(chip)removeChip(chip);return}
   var add=e.target.closest('.add-chip');
@@ -1025,6 +1067,23 @@ $('#dateInput').addEventListener('change',function(){
   loadCurrent();
 });
 $('#addMedBtn').addEventListener('click',function(){addMedRow('','')});
+
+/* 睡眠时间确定按钮：强制提交时间并提示 */
+document.addEventListener('click',function(e){
+  var ok=e.target.closest('.time-ok');
+  if(!ok)return;
+  var id=ok.getAttribute('data-for');
+  var inp=document.getElementById(id);
+  if(!inp)return;
+  if(!inp.value){toast('请先选择时间');return}
+  inp.blur();
+  inp.dispatchEvent(new Event('input',{bubbles:true}));
+  inp.dispatchEvent(new Event('change',{bubbles:true}));
+  updateSleepInfo();
+  toast('已记录'+(id==='bedTime'?'上床':'起床')+'时间：'+inp.value);
+});
+
+
 ['bedTime','riseTime'].forEach(function(id){$('#'+id).addEventListener('input',updateSleepInfo)});
 ['fallChips','wakeupChips'].forEach(function(id){$('#'+id).addEventListener('change',updateSleepInfo)});
 $('#negChips').addEventListener('change',updateNegHint);
