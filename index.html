@@ -704,7 +704,7 @@ var CUSTOM_KEY='dailyLog.custom';
 var HIDDEN_KEY='dailyLog.hidden';
 var CUSTOM_GROUPS={
   exChips:{solo:'无运动',defaults:['无运动','快走','慢跑','羽毛球','健身','拉伸/瑜伽','骑行'],addLabel:'其他',placeholder:'例如：打篮球 / 游泳'},
-  symChips:{solo:'无不适',defaults:['无不适','头疼','头晕','耳鸣','心慌/心跳快','胸闷','胃口变差','胃口亢进','胃胀/恶心','记忆力变差','注意力难集中','肩颈紧绷','肌肉酸痛','身体沉重疲乏'],addLabel:'其他',placeholder:'例如：手抖 / 胃痛'},
+  symChips:{solo:'无不适',defaults:['无不适','头疼','头晕','耳鸣','心慌/心跳快','胸闷','记忆力变差','注意力难集中','肩颈紧绷','肌肉酸痛','身体沉重疲乏'],addLabel:'其他',placeholder:'例如：手抖 / 胃痛'},
   trigChips:{solo:'无',defaults:['无','工作压力','加班','吵架/冲突','人际摩擦','长时间内耗','身体不适','睡眠太差','经济压力','家庭事务','纪念日/回忆'],addLabel:'其他',placeholder:'例如：考试 / 搬家'},
   negChips:{solo:'',defaults:['无'],fixed:['无'],addLabel:'其他',placeholder:'例如：有短暂想法、无计划'},
   gutChips:{solo:'无不适',defaults:['无不适','恶心','胃胀/腹胀','胃痛','便秘','腹泻','反酸/烧心'],addLabel:'其他',placeholder:'例如：肠鸣 / 呕吐'}
@@ -1618,7 +1618,12 @@ $('#histList').addEventListener('click',function(e){
 
 /* ================= 设置弹窗（账户） ================= */
 function recordsBackupText(){
-  return JSON.stringify({app:'daily-log',version:2,exportedAt:new Date().toISOString(),records:records});
+  return JSON.stringify({app:'daily-log',version:3,exportedAt:new Date().toISOString(),
+    records:records,
+    custom:(function(){try{return JSON.parse(localStorage.getItem(CUSTOM_KEY))||{}}catch(e){return{}}})(),
+    hidden:(function(){try{return JSON.parse(localStorage.getItem(HIDDEN_KEY))||{}}catch(e){return{}}})(),
+    sections:(function(){try{return JSON.parse(localStorage.getItem(SEC_KEY))||[]}catch(e){return[]}})()
+  });
 }
 function copyAllRecords(){
   var t=recordsBackupText();
@@ -1634,7 +1639,7 @@ function copyAllRecords(){
 function showRestoreModal(){
   openModal(
     '<h3>📥 粘贴恢复记录</h3>'
-    +'<div class="mrow">把之前「复制全部记录」保存的文本粘贴到下面。恢复后会与现有记录合并，同一天以备份为准。</div>'
+    +'<div class="mrow">把之前「复制全部记录」保存的文本粘贴到下面。恢复后会与现有记录合并，同一天以备份为准；<b>你的自定义标签、隐藏的标签与板块设置也会一并恢复。</b></div>'
     +'<textarea id="restoreTa" style="min-height:130px;font-size:12px" placeholder="粘贴备份文本（以 { 开头的一段）"></textarea>'
     +'<div class="btnrow"><button class="btn primary" id="restoreGoBtn">开始恢复</button><button class="btn" id="restoreCancelBtn">取消</button></div>'
   );
@@ -1648,14 +1653,20 @@ function showRestoreModal(){
       Object.keys(inc).forEach(function(d){
         if(/^\d{4}-\d{2}-\d{2}$/.test(d)&&inc[d]&&typeof inc[d]==='object'&&inc[d].mood!=null){records[d]=inc[d];n++}
       });
+      // 恢复个性化设置（自定义标签/隐藏标签/隐藏板块）
+      if(data.custom&&typeof data.custom==='object')localStorage.setItem(CUSTOM_KEY,JSON.stringify(data.custom));
+      if(data.hidden&&typeof data.hidden==='object')localStorage.setItem(HIDDEN_KEY,JSON.stringify(data.hidden));
+      if(Array.isArray(data.sections))localStorage.setItem(SEC_KEY,JSON.stringify(data.sections));
       saveLocal();
       if(MODE==='cloud'&&SB&&CURRENT_USER&&n){
         var err=await cloudUpsert(inc);
         toast(err?('已恢复到本机，云端同步失败：'+err):('已恢复 '+n+' 条记录并同步到云端 ✓'));
       }else{
-        toast('已恢复 '+n+' 条记录 ✓');
+        toast('已恢复 '+n+' 条记录与个性化设置 ✓');
       }
       closeModal();
+      ['exChips','symChips','trigChips','negChips','gutChips'].forEach(function(g){renderGroup(g)});
+      applySections();
       renderHeader();loadCurrent();
       if($('#tab-history').classList.contains('active'))renderHistory();
     }catch(e){toast('无法识别备份文本，请确认完整复制（从头到尾）')}
@@ -1673,8 +1684,8 @@ $('#gearBtn').addEventListener('click',function(){
   $('#mCopyBtn2').addEventListener('click',function(){closeModal();copyAllRecords()});
   $('#mRestoreBtn2').addEventListener('click',showRestoreModal);
   $('#mExportBtn2').addEventListener('click',function(){
-    download('状态记录备份-'+stamp()+'.json',JSON.stringify({app:'daily-log',version:2,exportedAt:new Date().toISOString(),records:records},null,2));
-    toast('已导出备份文件 ✓');
+    download('状态记录备份-'+stamp()+'.json',JSON.stringify(JSON.parse(recordsBackupText()),null,2));
+    toast('已导出备份文件（含个性化设置）✓');
   });
   $('#mCloseBtn2').addEventListener('click',closeModal);
 });
